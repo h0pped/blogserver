@@ -12,7 +12,4 @@ export class PrismaService extends PrismaClient {
       },
     });
   }
-  test() {
-    console.log('test');
-  }
 }

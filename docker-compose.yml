@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  dev-db:
+    image: postgres:13.2
+    container_name: dev-db
+    environment:
+      POSTGRES_USER: notawril
+      POSTGRES_PASSWORD: notawril
+      POSTGRES_DB: blog
+    ports:
+      - 5434:5432
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    networks:
+      - dev-network
+networks: 
+  dev-network:   

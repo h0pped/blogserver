@@ -1,6 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { AuthDto } from './dto';
+import { AuthDto, UserSignUpDto } from './dto';
 
 @Injectable()
 export class AuthService {
@@ -18,5 +22,25 @@ export class AuthService {
 
     delete user.hashedPassword;
     return user;
+  }
+
+  async signUp(authDto: UserSignUpDto) {
+    const { email, password, name, surname } = authDto;
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          email,
+          hashedPassword: password,
+          name,
+          surname,
+        },
+      });
+      delete user.hashedPassword;
+      return user;
+    } catch (err) {
+      if (err.code === 'P2002') {
+        throw new ForbiddenException('Email already in use');
+      }
+    }
   }
 }

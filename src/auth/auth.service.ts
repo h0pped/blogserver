@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import * as argon from 'argon2';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthDto, UserSignUpDto } from './dto';
 
@@ -13,10 +14,8 @@ export class AuthService {
   async signIn(authDto: AuthDto) {
     const { email, password } = authDto;
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      throw new NotFoundException("User with such credentials doesn't exist");
-    }
-    if (user.hashedPassword !== password) {
+
+    if (!user || !(await argon.verify(user.hashedPassword, password))) {
       throw new NotFoundException("User with such credentials doesn't exist");
     }
 
@@ -27,15 +26,23 @@ export class AuthService {
   async signUp(authDto: UserSignUpDto) {
     const { email, password, name, surname } = authDto;
     try {
+      const hashedPassword = await argon.hash(password);
+
       const user = await this.prisma.user.create({
         data: {
           email,
-          hashedPassword: password,
+          hashedPassword,
           name,
           surname,
         },
+        select: {
+          email: true,
+          name: true,
+          surname: true,
+          createdAt: true,
+        },
       });
-      delete user.hashedPassword;
+
       return user;
     } catch (err) {
       if (err.code === 'P2002') {
